@@ -10,8 +10,8 @@ Log schema design goals
  - Provide sufficient information about the event
  - Open and close (be flexible, avoid unnecessary change to schema)
 
-Design ideas
-============
+Design rationals
+================
 
 OSI Network Model Structure
 ---------------------------
@@ -35,3 +35,21 @@ system.
 Facility layer is all about the event, when it is generated, who emited this
 event, what's its routing tag and etc. Application layer is all about
 application data, like a dispute is processed, a debit is created and etc.
+
+Facility layer
+==============
+
+Header
+------
+
+TODO
+
+Payload
+-------
+
+TODO
+
+Open content
+------------
+
+TODO
