@@ -73,7 +73,7 @@ log is emited. Optional field can be
 
  - fqdn - The host name
  - application - Name of running application
- - application_ver - The version of curnning application
+ - application_version - The version of curnning application
 
 ### composition (optional)
 
