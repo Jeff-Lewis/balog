@@ -21,6 +21,7 @@ setup(
     install_requires=[
         'jsonschema',
         'structlog',
+        'pytz',
     ],
     extras_require=dict(
         tests=tests_require,
