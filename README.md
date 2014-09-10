@@ -66,11 +66,13 @@ Payload of this log.
 
 Open content of this log.
 
-### source (optional)
+### context (optional)
 
-Source of this event, usually a FQDN of host. Since this might not given by
-application when the event is generated, it could be attached by fluented
-or other log processor, so it should be optional.
+Context is a dict which contains information regarding the context when this
+log is emited. Optional field can be
+
+ - fqdn - The host name
+ - application_ver - The version of curnning application
 
 ### composition (optional)
 
