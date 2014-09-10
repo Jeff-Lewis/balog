@@ -72,6 +72,7 @@ Context is a dict which contains information regarding the context when this
 log is emited. Optional field can be
 
  - fqdn - The host name
+ - application - Name of running application
  - application_ver - The version of curnning application
 
 ### composition (optional)
