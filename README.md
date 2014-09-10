@@ -56,7 +56,7 @@ Creating time for this event, should be in ISO8601 format with UTC timezone.
 
 ### schema (required)
 
-The integer number indicates the version of schema.
+A string indicates what version this schema is, follow [Semantic Versioning 2.0.0](http://semver.org).
 
 ### payload (required)
 
