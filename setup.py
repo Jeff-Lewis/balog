@@ -22,6 +22,8 @@ setup(
         'jsonschema',
         'structlog',
         'pytz',
+        'iso8601',
+        'coid',
     ],
     extras_require=dict(
         tests=tests_require,

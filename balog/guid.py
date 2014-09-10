@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 import uuid
 
-from .base58 import b58encode
+import coid
 
 
 class GUIDFactory(object):
@@ -11,6 +11,7 @@ class GUIDFactory(object):
 
     def __init__(self, prefix):
         self.prefix = prefix
+        self.id_codec = coid.Id(prefix=self.prefix, encoding='base58')
 
     def __call__(self):
-        return self.prefix + b58encode(uuid.uuid4().bytes)
+        return self.id_codec.encode(uuid.uuid4())
