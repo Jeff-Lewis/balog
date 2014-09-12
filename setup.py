@@ -24,6 +24,7 @@ setup(
         'pytz',
         'iso8601',
         'coid',
+        'coland==1.0b1',
     ],
     extras_require=dict(
         tests=tests_require,
