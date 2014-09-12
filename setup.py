@@ -24,7 +24,7 @@ setup(
         'pytz',
         'iso8601',
         'coid',
-        'coland==1.0b1',
+        'git+git@github.com:victorlin/colander.git@dynamic-default-missing#egg=colander',
     ],
     extras_require=dict(
         tests=tests_require,

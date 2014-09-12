@@ -25,14 +25,15 @@ class FacilityRecordSchema(colander.MappingSchema):
 
     VERSION = '0.0.1'
 
-    schema = colander.SchemaNode(colander.String())
+    schema = colander.SchemaNode(colander.String(), default=VERSION)
     header = EventHeader()
     #payload = pilo.fields.SubForm(Payload)
     
 
 if __name__ == '__main__':
-    record = FacilityRecordSchema()
-    print record.deserialize({
+    schema = FacilityRecordSchema()
+    print schema.serialize({'header': {'channel': 'foobar'}})
+    print schema.deserialize({
         'schema': 'hello',
         'header': {
             'id': 'foobar',
