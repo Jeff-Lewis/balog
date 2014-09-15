@@ -17,6 +17,12 @@ def deferred_guid(node, kw):
     return GUIDFactory('LG')()
 
 
+class EventContext(colander.MappingSchema):
+    fqdn = colander.SchemaNode(colander.String(), default=colander.drop)
+    application = colander.SchemaNode(colander.String(), default=colander.drop)
+    application_version = colander.SchemaNode(colander.String(), default=colander.drop)
+
+
 class EventHeader(colander.MappingSchema):
     guid_factory = GUIDFactory('LG')
 
@@ -24,7 +30,7 @@ class EventHeader(colander.MappingSchema):
     channel = colander.SchemaNode(colander.String())
     timestamp = colander.SchemaNode(colander.DateTime(), default=deferred_utcnow)
     composition = colander.SchemaNode(colander.Bool(), default=colander.drop)
-    # context = pilo.fields.SubForm(EventContext, optional=True)
+    context = EventContext(default=colander.drop)
 
 
 class FacilityRecordSchema(colander.MappingSchema):
@@ -38,7 +44,17 @@ class FacilityRecordSchema(colander.MappingSchema):
 
 if __name__ == '__main__':
     schema = FacilityRecordSchema()
+
     print schema.bind().serialize({'header': {'channel': 'foobar'}})
+    print schema.bind().serialize({
+        'header': {
+            'channel': 'foobar',
+            'context': {
+                'fqdn': 'justitia.vandelay.io',
+            }
+        }
+    })
+
     print schema.deserialize({
         'schema': 'hello',
         'header': {
@@ -47,4 +63,3 @@ if __name__ == '__main__':
             'timestamp': '2014-08-26T04:15:53.386960+00:00',
         },
     })
-    #import ipdb; ipdb.set_trace()
