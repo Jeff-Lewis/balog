@@ -7,16 +7,22 @@ import colander
 from balog.guid import GUIDFactory
 
 
-def utcnow():
+@colander.deferred
+def deferred_utcnow(node, kw):
     return datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+
+
+@colander.deferred
+def deferred_guid(node, kw):
+    return GUIDFactory('LG')()
 
 
 class EventHeader(colander.MappingSchema):
     guid_factory = GUIDFactory('LG')
 
-    id = colander.SchemaNode(colander.String(), default=guid_factory)
+    id = colander.SchemaNode(colander.String(), default=deferred_guid)
     channel = colander.SchemaNode(colander.String())
-    timestamp = colander.SchemaNode(colander.DateTime(), default=utcnow)
+    timestamp = colander.SchemaNode(colander.DateTime(), default=deferred_utcnow)
     composition = colander.SchemaNode(colander.Bool(), default=colander.drop)
     # context = pilo.fields.SubForm(EventContext, optional=True)
 
@@ -32,7 +38,7 @@ class FacilityRecordSchema(colander.MappingSchema):
 
 if __name__ == '__main__':
     schema = FacilityRecordSchema()
-    print schema.serialize({'header': {'channel': 'foobar'}})
+    print schema.bind().serialize({'header': {'channel': 'foobar'}})
     print schema.deserialize({
         'schema': 'hello',
         'header': {
