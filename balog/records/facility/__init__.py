@@ -19,7 +19,36 @@ def deferred_guid(node, kw):
     return LOG_GUID_FACTORY()
 
 
-class Payload(colander.MappingSchema):
+class Abstract(colander.Mapping):
+
+    def serialize(self, node, appstruct, not_abstract=False):
+        if not_abstract:
+            return super(Abstract, self).serialize(node, appstruct)
+        polymorphic_on = node.__mapper_args__['polymorphic_on']
+        polymorphic_id = appstruct[polymorphic_on.name]
+
+        # TODO: get polymorphic_id mapping to subclasses
+        if polymorphic_id == 'log':
+            subnode = Log()
+        return subnode.typ.serialize(subnode, appstruct, not_abstract=True)
+
+    def deserialize(self, node, cstruct, not_abstract=False):
+        if not_abstract:
+            return super(Abstract, self).deserialize(node, cstruct)
+        polymorphic_on = node.__mapper_args__['polymorphic_on']
+        polymorphic_id = cstruct[polymorphic_on.name]
+
+        # TODO: get polymorphic_id mapping to subclasses
+        if polymorphic_id == 'log':
+            subnode = Log()
+        return subnode.typ.deserialize(subnode, cstruct, not_abstract=True)
+
+
+class AbstractSchema(colander.SchemaNode):
+    schema_type = Abstract
+
+
+class Payload(AbstractSchema):
     type = colander.SchemaNode(colander.String())
 
     # TODO: this is what I think how it should work
@@ -32,12 +61,14 @@ class Payload(colander.MappingSchema):
 class Log(Payload):
     type = 'log'
     message = colander.SchemaNode(colander.String())
-    severity = colander.SchemaNode(colander.OneOf((
-        'debug',
-        'info',
-        'warning',
-        'error',
-    )))
+    severity = colander.SchemaNode(colander.String(), validators=[
+        colander.OneOf((
+            'debug',
+            'info',
+            'warning',
+            'error',
+        ))
+    ])
 
 
 class EventContext(colander.MappingSchema):
@@ -55,7 +86,6 @@ class EventHeader(colander.MappingSchema):
 
 
 class FacilityRecordSchema(colander.MappingSchema):
-
     VERSION = '0.0.1'
 
     schema = colander.SchemaNode(colander.String(), default=VERSION)
