@@ -6,6 +6,8 @@ import colander
 
 from balog.guid import GUIDFactory
 
+LOG_GUID_FACTORY = GUIDFactory('LG')
+
 
 @colander.deferred
 def deferred_utcnow(node, kw):
@@ -14,7 +16,28 @@ def deferred_utcnow(node, kw):
 
 @colander.deferred
 def deferred_guid(node, kw):
-    return GUIDFactory('LG')()
+    return LOG_GUID_FACTORY()
+
+
+class Payload(colander.MappingSchema):
+    type = colander.SchemaNode(colander.String())
+
+    # TODO: this is what I think how it should work
+    # need to implement a MappingSchema so that it can work like this
+    __mapper_args__ = {
+        'polymorphic_on': type
+    }
+
+
+class Log(Payload):
+    type = 'log'
+    message = colander.SchemaNode(colander.String())
+    severity = colander.SchemaNode(colander.OneOf((
+        'debug',
+        'info',
+        'warning',
+        'error',
+    )))
 
 
 class EventContext(colander.MappingSchema):
@@ -24,8 +47,6 @@ class EventContext(colander.MappingSchema):
 
 
 class EventHeader(colander.MappingSchema):
-    guid_factory = GUIDFactory('LG')
-
     id = colander.SchemaNode(colander.String(), default=deferred_guid)
     channel = colander.SchemaNode(colander.String())
     timestamp = colander.SchemaNode(colander.DateTime(), default=deferred_utcnow)
@@ -39,19 +60,33 @@ class FacilityRecordSchema(colander.MappingSchema):
 
     schema = colander.SchemaNode(colander.String(), default=VERSION)
     header = EventHeader()
-    #payload = pilo.fields.SubForm(Payload)
+    payload = Payload()
     
 
 if __name__ == '__main__':
     schema = FacilityRecordSchema()
 
-    print schema.bind().serialize({'header': {'channel': 'foobar'}})
+    print schema.bind().serialize({
+        'header': {
+            'channel': 'foobar'
+        },
+        'payload': {
+            'type': 'log',
+            'message': 'bar',
+            'severity': 'info',
+        }
+    })
     print schema.bind().serialize({
         'header': {
             'channel': 'foobar',
             'context': {
                 'fqdn': 'justitia.vandelay.io',
             }
+        },
+        'payload': {
+            'type': 'log',
+            'message': 'bar',
+            'severity': 'info',
         }
     })
 
@@ -62,4 +97,9 @@ if __name__ == '__main__':
             'channel': 'test',
             'timestamp': '2014-08-26T04:15:53.386960+00:00',
         },
+        'payload': {
+            'type': 'log',
+            'message': 'bar',
+            'severity': 'info',
+        }
     })
