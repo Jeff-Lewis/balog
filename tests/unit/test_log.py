@@ -72,3 +72,24 @@ class TestLog(unittest.TestCase):
             'message': 'Hello world',
             'severity': 'info',
         })
+
+        # test different severity
+        root_logger.debug('foobar')
+        msg = handler.msgs[-1]
+        log_dict = json.loads(msg)
+        self.assertEqual(log_dict['payload']['severity'], 'debug')
+
+        root_logger.warn('foobar')
+        msg = handler.msgs[-1]
+        log_dict = json.loads(msg)
+        self.assertEqual(log_dict['payload']['severity'], 'warning')
+
+        root_logger.error('foobar')
+        msg = handler.msgs[-1]
+        log_dict = json.loads(msg)
+        self.assertEqual(log_dict['payload']['severity'], 'error')
+
+        root_logger.fatal('foobar')
+        msg = handler.msgs[-1]
+        log_dict = json.loads(msg)
+        self.assertEqual(log_dict['payload']['severity'], 'critical')
