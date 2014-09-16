@@ -4,8 +4,8 @@ import logging
 
 import pytz
 import colander
-from colander.polymorphism import AbstractSchema
 
+from balog.records.application import ApplicationRecordSchema
 from balog.guid import GUIDFactory
 
 LOG_GUID_FACTORY = GUIDFactory('LG')
@@ -20,34 +20,6 @@ def deferred_utcnow(node, kw):
 @colander.deferred
 def deferred_guid(node, kw):
     return LOG_GUID_FACTORY()
-
-
-class Payload(AbstractSchema):
-    cls_type = colander.SchemaNode(colander.String())
-
-    # TODO: this is what I think how it should work
-    # need to implement a MappingSchema so that it can work like this
-    __mapper_args__ = {
-        'polymorphic_on': 'cls_type',
-    }
-
-
-class Log(Payload):
-    cls_type = 'log'
-    message = colander.SchemaNode(colander.String())
-    severity = colander.SchemaNode(colander.String(), validators=[
-        colander.OneOf((
-            'debug',
-            'info',
-            'warning',
-            'error',
-        ))
-    ])
-
-
-class SuperLog(Log):
-    cls_type = 'super_log'
-    super = colander.SchemaNode(colander.Bool())
 
 
 class EventContext(colander.MappingSchema):
@@ -73,7 +45,7 @@ class FacilityRecordSchema(colander.MappingSchema):
 
     schema = colander.SchemaNode(colander.String(), default=VERSION)
     header = EventHeader()
-    payload = Payload()
+    payload = ApplicationRecordSchema()
 
 
 if __name__ == '__main__':
@@ -114,34 +86,5 @@ if __name__ == '__main__':
             'cls_type': 'log',
             'message': 'bar',
             'severity': 'info',
-        }
-    })
-
-    print schema.bind().serialize({
-        'header': {
-            'channel': 'foobar',
-            'context': {
-                'fqdn': 'justitia.vandelay.io',
-            }
-        },
-        'payload': {
-            'cls_type': 'super_log',
-            'message': 'bar',
-            'severity': 'info',
-            'super': True,
-        }
-    })
-    print schema.deserialize({
-        'schema': 'hello',
-        'header': {
-            'id': 'foobar',
-            'channel': 'test',
-            'timestamp': '2014-08-26T04:15:53.386960+00:00',
-        },
-        'payload': {
-            'cls_type': 'super_log',
-            'message': 'bar',
-            'severity': 'info',
-            'super': True,
         }
     })
