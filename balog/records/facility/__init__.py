@@ -88,3 +88,21 @@ if __name__ == '__main__':
             'severity': 'info',
         }
     })
+
+    print schema.bind().serialize({
+        'header': {
+            'channel': 'abc',
+            'context': {
+                'fqdn': 'justitia.vandelay.io',
+            }
+        },
+        'payload': {
+            'cls_type': 'metrics',
+            'values': [
+                {
+                    'name': 'total',
+                    'value': 1234,
+                }
+            ]
+        }
+    })

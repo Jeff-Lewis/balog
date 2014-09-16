@@ -29,3 +29,17 @@ class Log(ApplicationRecordSchema):
             'error',
         ))
     ])
+
+
+class MetricsValue(colander.MappingSchema):
+    name = colander.SchemaNode(colander.String())
+    value = colander.SchemaNode(colander.Float())
+
+
+class MetricsValues(colander.SequenceSchema):
+    value = MetricsValue()
+
+
+class Metrics(ApplicationRecordSchema):
+    cls_type = 'metrics'
+    values = MetricsValues()
