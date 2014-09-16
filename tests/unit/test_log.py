@@ -5,6 +5,7 @@ import json
 
 from balog import configure
 from balog import get_logger
+from balog.formatters import SchemaFormatter
 
 
 class DummyHandler(logging.Handler):
@@ -12,9 +13,12 @@ class DummyHandler(logging.Handler):
     def __init__(self, *args, **kwargs):
         super(DummyHandler, self).__init__(*args, **kwargs)
         self.records = []
+        self.msgs = []
 
     def emit(self, record):
         self.records.append(record)
+        msg = self.format(record)
+        self.msgs.append(msg)
 
 
 class TestLog(unittest.TestCase):
@@ -46,4 +50,25 @@ class TestLog(unittest.TestCase):
                 {'name': 'foo', 'value': '1234.0'},
                 {'name': 'bar', 'value': '5678.0'},
             ]
+        })
+
+    def test_formatter(self):
+        formatter = SchemaFormatter()
+        handler = DummyHandler()
+        handler.setFormatter(formatter)
+        root_logger = logging.getLogger()
+        root_logger.addHandler(handler)
+
+        root_logger.info('Hello world')
+
+        self.assertEqual(len(handler.msgs), 1)
+        msg = handler.msgs[0]
+        log_dict = json.loads(msg)
+        self.assertEqual(log_dict['schema'], '0.0.1')
+        self.assertTrue(log_dict['header']['id'].startswith('LG'))
+        self.assertEqual(log_dict['header']['channel'], 'root')
+        self.assertEqual(log_dict['payload'], {
+            'cls_type': 'log',
+            'message': 'Hello world',
+            'severity': 'info',
         })

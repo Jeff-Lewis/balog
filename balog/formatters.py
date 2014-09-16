@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import logging
 import json
 
-from .schema import LogProcessor
+from .processors import LogProcessor
 
 
 class SchemaFormatter(logging.Formatter):
