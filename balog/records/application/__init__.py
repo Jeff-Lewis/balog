@@ -27,6 +27,7 @@ class Log(ApplicationRecordSchema):
             'info',
             'warning',
             'error',
+            'critical',
         ))
     ])
 

@@ -5,7 +5,7 @@ from structlog.stdlib import LoggerFactory
 from structlog.processors import format_exc_info
 from structlog.processors import JSONRenderer
 
-from schema import LogSchema
+from .processors import LogProcessor
 
 
 def configure():
@@ -15,7 +15,7 @@ def configure():
     structlog.configure(
         processors=[
             format_exc_info,
-            LogSchema(),
+            LogProcessor(),
             JSONRenderer(),
         ],
         logger_factory=LoggerFactory(),

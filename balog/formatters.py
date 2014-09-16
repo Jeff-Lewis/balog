@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import logging
 import json
 
-from .schema import LogSchema
+from .schema import LogProcessor
 
 
 class SchemaFormatter(logging.Formatter):
@@ -19,5 +19,5 @@ class SchemaFormatter(logging.Formatter):
         # looks like we have a plain text string message
         except ValueError:
             # transform it into log schema
-            msg = LogSchema.jsonify_unstructed_log(record)
+            msg = LogProcessor.jsonify_unstructed_log(record)
         return msg
