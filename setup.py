@@ -10,8 +10,7 @@ tests_require = [
     'jsonschema',
 ]
 
-version = '0.0.0'
-# TODO: read version number here
+version = '0.0.1'
 
 
 setup(
