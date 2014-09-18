@@ -16,6 +16,8 @@ version = '0.0.2'
 setup(
     name='balog',
     version=version,
+    description='Balanced event logging schema and library',
+    url='https://github.com/balanced/balog/',
     packages=find_packages(),
     install_requires=[
         'jsonschema',
