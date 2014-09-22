@@ -7,6 +7,8 @@ from structlog.processors import JSONRenderer
 
 from .processors import LogProcessor
 
+__version__ = '0.0.3'
+
 
 def configure():
     """Configure Balanced logging system

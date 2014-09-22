@@ -10,7 +10,12 @@ tests_require = [
     'jsonschema',
 ]
 
-version = '0.0.2'
+version = '0.0.0'
+try:
+    import balog
+    version = balog.__version__
+except ImportError:
+    pass
 
 
 setup(
