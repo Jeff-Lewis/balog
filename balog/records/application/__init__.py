@@ -30,6 +30,7 @@ class Log(ApplicationRecordSchema):
             'critical',
         ))
     ])
+    exc_text = colander.SchemaNode(colander.String(), default=colander.drop)
 
 
 class MetricsValue(colander.MappingSchema):

@@ -86,3 +86,22 @@ class TestLog(unittest.TestCase):
             msg = handler.msgs[-1]
             log_dict = json.loads(msg)
             self.assertEqual(log_dict['payload']['severity'], severity)
+
+    def test_formatter_with_exc(self):
+        formatter = SchemaFormatter()
+        handler = DummyHandler()
+        handler.setFormatter(formatter)
+        root_logger = logging.getLogger()
+        root_logger.addHandler(handler)
+
+        try:
+            raise ValueError('test')
+        except ValueError:
+            root_logger.error('test exec', exc_info=True)
+
+        self.assertEqual(len(handler.msgs), 1)
+        msg = handler.msgs[0]
+        log_dict = json.loads(msg)
+
+        self.assertIn('exc_text', log_dict['payload'])
+        self.assertIn('ValueError', log_dict['payload']['exc_text'])

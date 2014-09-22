@@ -12,8 +12,7 @@ class SchemaFormatter(logging.Formatter):
     """
 
     def format(self, record):
-        record.message = record.getMessage()
-        msg = record.message
+        msg = super(SchemaFormatter, self).format(record)
         try:
             json.loads(msg)
         # looks like we have a plain text string message

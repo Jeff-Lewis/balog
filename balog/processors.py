@@ -26,6 +26,8 @@ class LogProcessor(object):
                 'message': record.getMessage(),
             }
         })
+        if record.exc_text:
+            event_dict['payload']['exc_text'] = record.exc_text
         return json.dumps(event_dict)
 
     def __call__(self, logger, name, event_dict):
