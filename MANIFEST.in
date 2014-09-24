@@ -1,2 +1,3 @@
 include ez_setup.py README.md LICENSE
+recursive-include balog *.txt
 prune .env

@@ -3,6 +3,8 @@ use_setuptools()
 
 from setuptools import setup, find_packages
 
+import os
+
 tests_require = [
     'nose',
     'nose-cov',
@@ -10,12 +12,7 @@ tests_require = [
     'jsonschema',
 ]
 
-version = '0.0.0'
-try:
-    import balog
-    version = balog.__version__
-except ImportError:
-    pass
+version = open(os.path.join('balog', 'version.txt'), 'rt').read()
 
 
 setup(
