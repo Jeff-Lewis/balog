@@ -15,6 +15,21 @@ from ..records.facility import FacilityRecordSchema
 logger = logging.getLogger(__name__)
 
 
+class DefaultConsumerOperator(object):
+
+    def get_topic(self, consumer):
+        """Get the topic of consumer
+
+        """
+        return consumer.topic
+
+    def process_event(self, consumer, event):
+        """Call consumer's function
+
+        """
+        return consumer.func(event)
+
+
 # TODO: define a base class?
 class SQSEngine(object):
     """Event processing engine for polling Amazon SQS queues
@@ -29,7 +44,7 @@ class SQSEngine(object):
         aws_secret_access_key,
         polling_period=1,
         num_messages=10,
-        consumer_decorator=None,
+        consumer_operator=None,
     ):
         self.hub = hub
         # aws credentials
@@ -40,10 +55,10 @@ class SQSEngine(object):
         self.polling_period = polling_period
         #: maximum number of messages to get at once
         self.num_messages = num_messages
-        #: decorator of consumer consumer_decorator
-        self.consumer_decorator = consumer_decorator
-        if self.consumer_decorator is None:
-            self.consumer_decorator = lambda consumer: consumer
+        #: the object which knows how to operate consumers
+        self.consumer_operator = consumer_operator
+        if self.consumer_operator is None:
+            self.consumer_operator = DefaultConsumerOperator
 
         self.running = False
 
@@ -73,8 +88,7 @@ class SQSEngine(object):
                 # so, we should be careful, do not generate log record
                 # from this script
                 for consumer in consumers:
-                    decorated_consumer = self.consumer_decorator(consumer)
-                    decorated_consumer.func(event)
+                    self.consumer_operator.process_event(consumer, event)
                 # delete it from queue
                 queue.delete_message(msg)
 
@@ -88,8 +102,8 @@ class SQSEngine(object):
         # map topic name (queue name) to consumers
         topic_to_consumers = collections.defaultdict(list)
         for consumer in self.hub.consumers:
-            decorated_consumer = self.consumer_decorator(consumer)
-            topic_to_consumers[decorated_consumer.topic].append(consumer)
+            topic = self.consumer_operator.get_topic(consumer)
+            topic_to_consumers[topic].append(consumer)
 
         # create threads for consuming events from SQS
         threads = []
