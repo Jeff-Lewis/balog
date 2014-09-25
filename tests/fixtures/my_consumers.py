@@ -4,15 +4,15 @@ from balog.consumers import consumer_config
 
 
 @consumer_config(topic='foo.bar', cls_types=('eggs', ))
-def consumer_a(events):
+def consumer_a(event):
     pass
 
 
 @consumer_config(topic='spam.eggs')
-def consumer_b(events):
+def consumer_b(event):
     pass
 
 
 @consumer_config(topic='5566', cls_types=('55', '66'))
-def consumer_c(events):
+def consumer_c(event):
     pass

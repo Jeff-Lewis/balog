@@ -45,6 +45,12 @@ class Consumer(object):
         self.cls_types = cls_types
         self.name = name
 
+    def __repr__(self):
+        return '<{} {}>'.format(
+            self.__class__.__name__,
+            self.name or self.func,
+        )
+
     def match_event(self, event):
         """Return whether is this consumer interested in the given event
 
@@ -90,9 +96,3 @@ class ConsumerHub(object):
             if not consumer.match_event(event):
                 continue
             yield consumer
-
-    def process(self, events):
-        """Process events
-
-        """
-        # TODO:
