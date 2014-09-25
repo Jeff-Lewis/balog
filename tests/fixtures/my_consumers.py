@@ -11,3 +11,8 @@ def consumer_a(events):
 @consumer_config(topic='spam.eggs')
 def consumer_b(events):
     pass
+
+
+@consumer_config(topic='5566', cls_types=('55', '66'))
+def consumer_c(events):
+    pass

@@ -11,14 +11,20 @@ class TestConsumer(unittest.TestCase):
         hub = ConsumerHub()
         hub.scan(my_consumers)
 
-        self.assertEqual(len(hub.consumers), 2)
+        self.assertEqual(len(hub.consumers), 3)
         func_to_consumers = dict(
             (consumer.func, consumer)
             for consumer in hub.consumers
         )
         self.assertEqual(
             set(func_to_consumers.keys()),
-            set([my_consumers.consumer_a, my_consumers.consumer_b]),
+            set(
+                [
+                    my_consumers.consumer_a,
+                    my_consumers.consumer_b,
+                    my_consumers.consumer_c
+                ]
+            )
         )
 
         consumer_a = func_to_consumers[my_consumers.consumer_a]
@@ -28,3 +34,13 @@ class TestConsumer(unittest.TestCase):
         consumer_b = func_to_consumers[my_consumers.consumer_b]
         self.assertEqual(consumer_b.topic, 'spam.eggs')
         self.assertEqual(consumer_b.cls_types, None)
+
+        consumer_c = func_to_consumers[my_consumers.consumer_c]
+        self.assertEqual(consumer_c.topic, '5566')
+        self.assertEqual(consumer_c.cls_types, ('55', '66'))
+
+        eggs_event = dict(payload=dict(cls_type='eggs'))
+        self.assertEqual(
+            set(hub.route(eggs_event)),
+            set([consumer_a, consumer_b]),
+        )
