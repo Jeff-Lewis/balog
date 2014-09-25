@@ -27,6 +27,7 @@ setup(
         'pytz',
         'iso8601',
         'coid',
+        'venusian',
         # Notice: the original package name is colander, we have a branch here
         # git+git@github.com:victorlin/colander.git@polymorphism#egg=colander
         # since we cannot add the git repo in install_requires, so I release
