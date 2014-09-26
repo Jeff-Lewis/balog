@@ -81,13 +81,15 @@ class SQSEngine(object):
             for msg in msgs:
                 json_data = json.loads(msg.get_body())
                 event = schema.deserialize(json_data)
-                logger.debug('Processing event %r', event)
                 # Notice: Since we're processing logs, if we generate
                 # log and that will be consumed by this loop, it may
                 # end up with flood issue (one log generates more logs)
                 # so, we should be careful, do not generate log record
                 # from this script
+                logger.debug('Processing event %r', event)
                 for consumer in consumers:
+                    if not consumer.match_event(event):
+                        continue
                     self.consumer_operator.process_event(consumer, event)
                 # delete it from queue
                 queue.delete_message(msg)
