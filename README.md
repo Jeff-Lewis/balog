@@ -1,6 +1,8 @@
 balog
 =====
 
+[![Build Status](https://travis-ci.org/balanced/balog.svg?branch=master)](https://travis-ci.org/balanced/balog)
+
 Balanced event logging schema and library
 
 Log schema design goals
