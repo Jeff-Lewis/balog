@@ -12,6 +12,10 @@ tests_require = [
     'jsonschema',
 ]
 
+sqs_require = [
+    'boto',
+]
+
 version = open(os.path.join('balog', 'version.txt'), 'rt').read()
 
 
@@ -39,6 +43,7 @@ setup(
     ],
     extras_require=dict(
         tests=tests_require,
+        sqs=sqs_require,
     ),
     tests_require=tests_require,
     test_suite='nose.collector',
