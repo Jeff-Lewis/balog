@@ -89,7 +89,10 @@ class Consumer(object):
         rhs_operant = version_condition[len(op_symbol):]
 
         def op_func(schema_version):
-            return condition_op(schema_version, rhs_operant)
+            return condition_op(
+                StrictVersion(schema_version),
+                StrictVersion(rhs_operant),
+            )
 
         return op_func
 

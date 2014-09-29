@@ -83,4 +83,14 @@ class TestConsumer(unittest.TestCase):
         assert_not_match('1.0.0', consumer_b)
         assert_not_match('2.0', consumer_b)
         assert_not_match('2.0.0', consumer_b)
-        assert_not_match('2.0.0.1', consumer_b)
+        assert_not_match('2.0.1', consumer_b)
+
+        consumer_c = Consumer(
+            lambda: None,
+            'foobar',
+            version='>=1.0.1000',
+        )
+        assert_match('1.0.1001', consumer_b)
+        assert_match('1.0.2002', consumer_b)
+        assert_not_match('1.0.999', consumer_c)
+        assert_not_match('1.0.1', consumer_c)
