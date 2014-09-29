@@ -88,6 +88,8 @@ class Consumer(object):
         # the version number part in version condition, e.g 1.0.0
         rhs_operant = version_condition[len(op_symbol):]
 
+        # version number compare recipe from
+        # http://stackoverflow.com/questions/1714027/version-number-comparison
         def op_func(schema_version):
             return condition_op(
                 StrictVersion(schema_version),
@@ -105,8 +107,6 @@ class Consumer(object):
             event['payload']['cls_type'] not in self.cls_types
         ):
             return False
-        # version number compare recipe from
-        # http://stackoverflow.com/questions/1714027/version-number-comparison
         if (self.version is not None):
             schema_version = event['schema']
             for version_condition in self.version:
