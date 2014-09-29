@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from distutils.version import StrictVersion
 
 import venusian
 
@@ -33,16 +34,33 @@ def consumer_config(*args, **kwargs):
     return decorator
 
 
+def _to_tuple(obj):
+    if obj is not None and not isinstance(obj, tuple):
+        return (obj, )
+    return obj
+
+
 class Consumer(object):
     """A consumer represents a function with certain configurations for
     consuming events
 
     """
 
-    def __init__(self, func, topic, cls_types=None, name=None):
+    VERSION_OPS = {
+        '<': lambda lhs, rhs: lhs < rhs,
+        '<=': lambda lhs, rhs: lhs <= rhs,
+        '>': lambda lhs, rhs: lhs > rhs,
+        '>=': lambda lhs, rhs: lhs >= rhs,
+        '==': lambda lhs, rhs: lhs == rhs,
+    }
+
+    def __init__(self, func, topic, cls_types=None, version=None, name=None):
         self.func = func
         self.topic = topic
-        self.cls_types = cls_types
+        #: predicate that limits cls_types of event
+        self.cls_types = _to_tuple(cls_types)
+        #: predicate that limits schema version number
+        self.version = _to_tuple(version)
         self.name = name
 
     def __repr__(self):
@@ -51,15 +69,48 @@ class Consumer(object):
             self.name or self.func,
         )
 
+    def _parse_version_condition(self, version_condition):
+        """Parse given version_condition, and return a function that returns
+        a boolean value which indicates whether the given schema version meets
+        the condition
+
+        """
+        for op_symbol, condition_op in self.VERSION_OPS.iteritems():
+            if version_condition.startswith(op_symbol):
+                break
+        else:
+            raise ValueError(
+                'Bad version condition, should start with either '
+                '>, >=, <, <= or ==, then the version numbers, e.g. '
+                '>=1.0.1'
+            )
+
+        # the version number part in version condition, e.g 1.0.0
+        rhs_operant = version_condition[len(op_symbol):]
+
+        def op_func(schema_version):
+            return condition_op(schema_version, rhs_operant)
+
+        return op_func
+
     def match_event(self, event):
         """Return whether is this consumer interested in the given event
 
         """
-        if self.cls_types is None:
-            return True
-        if event['payload']['cls_type'] in self.cls_types:
-            return True
-        return False
+        if (
+            self.cls_types is not None and
+            event['payload']['cls_type'] not in self.cls_types
+        ):
+            return False
+        # version number compare recipe from
+        # http://stackoverflow.com/questions/1714027/version-number-comparison
+        if (self.version is not None):
+            schema_version = event['schema']
+            for version_condition in self.version:
+                op_func = self._parse_version_condition(version_condition)
+                if not op_func(schema_version):
+                    return False
+        return True
 
 
 class ConsumerHub(object):

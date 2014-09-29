@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from balog.consumers import consumer_config
 
 
-@consumer_config(topic='foo.bar', cls_types=('eggs', ))
+@consumer_config(topic='foo.bar', cls_types='eggs')
 def consumer_a(event):
     pass
 
