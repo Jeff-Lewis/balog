@@ -11,7 +11,7 @@ def consumer_config(*args, **kwargs):
 
         @consumer_config(
             topic='justitia.generic_events',
-            cls_types=('metrics', ),
+            cls_type=('metrics', ),
         )
         def process_metrics(event):
             '''Process metrics events and push values to librato
@@ -54,11 +54,11 @@ class Consumer(object):
         '==': lambda lhs, rhs: lhs == rhs,
     }
 
-    def __init__(self, func, topic, cls_types=None, version=None, name=None):
+    def __init__(self, func, topic, cls_type=None, version=None, name=None):
         self.func = func
         self.topic = topic
-        #: predicate that limits cls_types of event
-        self.cls_types = _to_tuple(cls_types)
+        #: predicate that limits cls_type of event
+        self.cls_type = _to_tuple(cls_type)
         #: predicate that limits schema version number
         self.version = _to_tuple(version)
         self.name = name
@@ -103,8 +103,8 @@ class Consumer(object):
 
         """
         if (
-            self.cls_types is not None and
-            event['payload']['cls_type'] not in self.cls_types
+            self.cls_type is not None and
+            event['payload']['cls_type'] not in self.cls_type
         ):
             return False
         if (self.version is not None):
