@@ -34,6 +34,10 @@ class LogProcessor(object):
         """Transform given event dict to the format we want
 
         """
+        raw_event = event_dict.pop('raw_event', None)
+        if raw_event is not None:
+            return raw_event
+
         channel = event_dict.pop('channel', None)
         if channel is None:
             channel = logger.name + '.' + event_dict.pop('event')

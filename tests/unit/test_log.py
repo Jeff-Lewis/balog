@@ -105,3 +105,16 @@ class TestLog(unittest.TestCase):
 
         self.assertIn('exc_text', log_dict['payload'])
         self.assertIn('ValueError', log_dict['payload']['exc_text'])
+
+    def test_raw_event(self):
+        handler = DummyHandler()
+        root_logger = logging.getLogger()
+        root_logger.addHandler(handler)
+
+        configure()
+        logger = get_logger()
+        logger.info('foobar', raw_event={'foo': 'bar'})
+        self.assertEqual(len(handler.records), 1)
+        msg = handler.records[0].getMessage()
+        log_dict = json.loads(msg)
+        self.assertEqual(log_dict, {'foo': 'bar'})
