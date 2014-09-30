@@ -45,6 +45,7 @@ class SQSEngine(object):
         polling_period=1,
         num_messages=10,
         consumer_operator=None,
+        default_event_handler=None,
     ):
         self.hub = hub
         # aws credentials
@@ -59,6 +60,7 @@ class SQSEngine(object):
         self.consumer_operator = consumer_operator
         if self.consumer_operator is None:
             self.consumer_operator = DefaultConsumerOperator
+        self.default_event_handler = default_event_handler
 
         self.running = False
 
@@ -87,10 +89,17 @@ class SQSEngine(object):
                 # so, we should be careful, do not generate log record
                 # from this script
                 logger.debug('Processing event %r', event)
+                processed = False
                 for consumer in consumers:
                     if not consumer.match_event(event):
                         continue
+                    # TODO: what about process_event raises exceptions?
                     self.consumer_operator.process_event(consumer, event)
+                    processed = True
+                # nobody processed this event, let default event handler
+                # handle it
+                if not processed and self.default_event_handler is not None:
+                    self.default_event_handler(event)
                 # delete it from queue
                 queue.delete_message(msg)
 
