@@ -38,62 +38,6 @@ Facility layer is all about the event, when it is generated, who emited this
 event, what's its routing tag and etc. Application layer is all about
 application data, like a dispute is processed, a debit is created and etc.
 
-Facility layer
-==============
-
-Header
-------
-
-### id (required)
-
-The unique GUID for this event, starts with `LG` prefix.
-
-### channel (required)
-
-The tag for routing event, e.g. `justitia.models.disputes.created`.
-
-### timestamp (required)
-
-Creating time for this event, should be in ISO8601 format with UTC timezone.
-
-### schema (required)
-
-A string indicates what version this schema is, follow [Semantic Versioning 2.0.0](http://semver.org).
-
-### payload (required)
-
-Payload of this log.
-
-### open_content (optional)
-
-Open content of this log.
-
-### context (optional)
-
-Context is a dict which contains information regarding the context when this
-log is emited. Optional field can be
-
- - fqdn - The host name
- - application - Name of running application
- - application_version - The version of curnning application
-
-### composition (optional)
-
-Is this event a composited event. If this field is not present, then composition
-value is default to `false`.
-
-TODO
-
-Payload
--------
-
-TODO
-
-Open content
-------------
-
-TODO
-
 Usage
 =====
 
