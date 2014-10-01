@@ -130,9 +130,9 @@ def process_metrics(settings, event):
     pass
 ```
 
-This `consumer_config` decorator is mainly for declaring what this consumer wants, in the example above, since want to subscribe the queue `balanced-justitia-events-develop` or `balanced-justitia-events-prod`, so we set the topic to `'balanced-justitia-events-{env}'`, for the `{env}` placeholder, we will talk about that later. And then we're only interested in `metrics` type events, so we set `cls_type` to `metrics`. Then we don't want to process events that's not compatible, so we set the `version` to `<1.0`. 
+This `consumer_config` decorator is mainly for declaring what this consumer wants, in the example above, since want to subscribe the queue `balanced-justitia-events-develop` or `balanced-justitia-events-prod`, so we set the topic to `'balanced-justitia-events-{env}'`, for the `{env}` placeholder, we will talk about that later. And then we're only interested in `metrics` type events, so we set `cls_type` to `metrics`. We also don't want to process events that are not compatible, so we set the `version` to `<1.0`. 
 
-With these configured consumers, to process events, you need to use `ConsumerHub`. It is basically a collection of consumers. It provides scanning function to make collecting consumers pretty easy. For example, here you can write
+With these configured consumers, to process events, you need to use `ConsumerHub` first. It is basically a collection of consumers. It provides scanning method to make collecting consumers pretty easy. For example, here you can write
 
 ```python
 import justitia
@@ -142,4 +142,22 @@ hub = ConsumerHub()
 hub.scan(justitia)
 ```
 
-By doing that, you have all consuemrs in the hub.
+By doing that, you have all consuemrs in the hub. Then you can create an event processing engine. We only have Amazon SQS event processing engine for now, but it should be fairly easy to impelement any other engine type as they are needed. Before we create the engine, you need to define a `ConsumerOperator` first. It's basically an object which knows how to operate these consumer. So that you can call these consumer functions in the way you want. Here is an example:
+
+
+```python
+class ConsumerOperator(object):
+
+    def __init__(self, settings):
+        self.settings = settings
+
+    def get_topic(self, consumer):
+        env = self.settings['api.sqs.queue_env']
+        return consumer.topic.format(env=env)
+
+    def process_event(self, consumer, event):
+        return consumer.func(self.settings, event)
+```
+
+It has two methods, the first is `get_topic`, it is for getting topic, namely, the queue name to subscribe. As we saw the topic name in `consumer_config` is `balanced-justitia-events-{env}` above, here I explain why it looks like that. Since we may need to subscribe to different event queue in different environment, like integration or production environment, so we cannot just leave a static value there. To make it as flexible as possible, I let the consumer operator decide how to get the topic name. So in our example, you can see it gets `api.sqs.queue_env` from settings and replace the `env` placeholder. By doing that, we can determine which queue to subscribe later. Similar to the deferred topic name, I also want to make it possible to call the consumer function in the way you like, the `process_event` method of consumer operator is for that purpose. Since in our consumer handler function, we may need some extra information other than just the event, in our example, we also need to read settings. So that in our example, we pass an extra argument `settings` to the consumer function.
+
