@@ -93,3 +93,25 @@ Open content
 ------------
 
 TODO
+
+Usage
+=====
+
+To produce events, here you can write
+
+```python
+from balog import get_logger
+balogger = get_logger(__name__)
+
+balogger.info('done', payload={
+    'cls_type': 'metrics',
+    'values': [
+        {'name': 'total', 'value': num},
+        {'name': 'succeeded', 'value': succeeded},
+        {'name': 'failed', 'value': failed},
+    ],
+})
+```
+
+The channel name will be the logger name + the given suffix name, in the above example, the say if the `__name__` is 
+`justitia.scripts.process_results` here, then the channel name will be `justitia.scripts.process_results.done`. If you want to overwrite the channel name, you can also pass `channel` argument to balog logging methods.
