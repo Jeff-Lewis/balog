@@ -131,3 +131,15 @@ def process_metrics(settings, event):
 ```
 
 This `consumer_config` decorator is mainly for declaring what this consumer wants, in the example above, since want to subscribe the queue `balanced-justitia-events-develop` or `balanced-justitia-events-prod`, so we set the topic to `'balanced-justitia-events-{env}'`, for the `{env}` placeholder, we will talk about that later. And then we're only interested in `metrics` type events, so we set `cls_type` to `metrics`. Then we don't want to process events that's not compatible, so we set the `version` to `<1.0`. 
+
+With these configured consumers, to process events, you need to use `ConsumerHub`. It is basically a collection of consumers. It provides scanning function to make collecting consumers pretty easy. For example, here you can write
+
+```python
+import justitia
+from balog.consumers import ConsumerHub
+
+hub = ConsumerHub()
+hub.scan(justitia)
+```
+
+By doing that, you have all consuemrs in the hub.
