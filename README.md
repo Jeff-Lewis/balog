@@ -97,7 +97,7 @@ TODO
 Usage
 =====
 
-To produce events, here you can write
+To produce a log, here you can write
 
 ```python
 from balog import get_logger
@@ -106,12 +106,28 @@ balogger = get_logger(__name__)
 balogger.info('done', payload={
     'cls_type': 'metrics',
     'values': [
-        {'name': 'total', 'value': num},
-        {'name': 'succeeded', 'value': succeeded},
-        {'name': 'failed', 'value': failed},
+        {'name': 'total', 'value': 123},
+        {'name': 'succeeded', 'value': 456},
+        {'name': 'failed', 'value': 789},
     ],
 })
 ```
 
 The channel name will be the logger name + the given suffix name, in the above example, the say if the `__name__` is 
 `justitia.scripts.process_results` here, then the channel name will be `justitia.scripts.process_results.done`. If you want to overwrite the channel name, you can also pass `channel` argument to balog logging methods.
+
+To consume events, you can use `consumer_config` like this
+
+```python
+from balog.consumers import consumer_config
+
+@consumer_config(
+    topic='balanced-justitia-events-{env}',
+    cls_type='metrics',
+    version='<1.0',
+)
+def process_metrics(settings, event):
+    pass
+```
+
+This `consumer_config` decorator is mainly for declaring what this consumer wants, in the example above, since want to subscribe the queue `balanced-justitia-events-develop` or `balanced-justitia-events-prod`, so we set the topic to `'balanced-justitia-events-{env}'`, for the `{env}` placeholder, we will talk about that later. And then we're only interested in `metrics` type events, so we set `cls_type` to `metrics`. Then we don't want to process events that's not compatible, so we set the `version` to `<1.0`. 
