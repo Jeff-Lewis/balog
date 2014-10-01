@@ -97,6 +97,9 @@ TODO
 Usage
 =====
 
+Produce logs
+------------
+
 To produce a log, here you can write
 
 ```python
@@ -115,6 +118,9 @@ balogger.info('done', payload={
 
 The channel name will be the logger name + the given suffix name, in the above example, the say if the `__name__` is 
 `justitia.scripts.process_results` here, then the channel name will be `justitia.scripts.process_results.done`. If you want to overwrite the channel name, you can also pass `channel` argument to balog logging methods.
+
+Consume logs
+------------
 
 To consume events, you can use `consumer_config` like this
 
