@@ -161,3 +161,44 @@ class ConsumerOperator(object):
 
 It has two methods, the first is `get_topic`, it is for getting topic, namely, the queue name to subscribe. As we saw the topic name in `consumer_config` is `balanced-justitia-events-{env}` above, here I explain why it looks like that. Since we may need to subscribe to different event queue in different environment, like integration or production environment, so we cannot just leave a static value there. To make it as flexible as possible, I let the consumer operator decide how to get the topic name. So in our example, you can see it gets `api.sqs.queue_env` from settings and replace the `env` placeholder. By doing that, we can determine which queue to subscribe later. Similar to the deferred topic name, I also want to make it possible to call the consumer function in the way you like, the `process_event` method of consumer operator is for that purpose. Since in our consumer handler function, we may need some extra information other than just the event, in our example, we also need to read settings. So that in our example, we pass an extra argument `settings` to the consumer function.
 
+Okay, now let's put it altogether
+
+
+```python
+from __future__ import unicode_literals
+
+from balog.consumers import ConsumerHub
+from balog.consumers.sqs import SQSEngine
+
+import justitia
+
+
+class ConsumerOperator(object):
+
+    def __init__(self, settings):
+        self.settings = settings
+
+    def get_topic(self, consumer):
+        env = self.settings['api.sqs.queue_env']
+        return consumer.topic.format(env=env)
+
+    def process_event(self, consumer, event):
+        return consumer.func(self.settings, event)
+
+
+def process_events(settings):
+    """Process log events in SQS
+
+    """
+    hub = ConsumerHub()
+    hub.scan(justitia)
+    consumer_op = ConsumerOperator(settings)
+    engine = SQSEngine(
+        hub=hub,
+        region=settings['api.sqs.region'],
+        aws_access_key_id=settings['api.sqs.aws_access_key_id'],
+        aws_secret_access_key=settings['api.sqs.aws_secret_access_key'],
+        consumer_operator=consumer_op,
+    )
+    engine.run()
+```
