@@ -64,7 +64,7 @@ class Engine(object):
         logger.info(
             'Polling %s for consumers %s',
             topic, consumers,
-            )
+        )
         while self.running:
             for message in self.messages(topic):
                 self.on_message(message, consumers)

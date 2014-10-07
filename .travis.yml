@@ -10,4 +10,4 @@ install:
 script: 
   - 'nosetests -sv --with-coverage'
   - 'pip install flake8 --use-mirrors'
-  - 'flake8 balog --ignore=E501,W293'
+  - 'flake8 balog --ignore=E501,W293,F401'
