@@ -8,13 +8,6 @@ from balog import consumers, engines
 from tests import fixtures
 
 
-event = {
-    'payload': {
-        'cls_type': '88'
-    }
-}
-
-
 class TestKafkaEngine(unittest.TestCase):
 
     def setUp(self):

@@ -54,7 +54,7 @@ class TestEngine(unittest.TestCase):
                 self.engine, 'on_event'
         ) as oe:
             self.engine.on_message(
-                open(fixtures.get_for_reals_path('message.json')).read(),
+                fixtures.load_text('message.json'),
                 None
             )
         self.assertEqual(oe.call_count, 1)
