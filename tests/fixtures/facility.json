@@ -1,38 +1,38 @@
 {
-    "$schema": "http://json-schema.org/draft-04/schema#",
-    "type": "object",
-    "properties": {
-        "id": {
-            "type": "string",
-            "pattern": "LG[a-zA-Z0-9]{32}"
-        },
-        "channel": {
-            "type": "string",
-            "format": "string"
-        },
-        "timestamp": {
-            "type": "string",
-            "format": "date-time"
-        },
-        "schema": {
-            "type": "integer",
-             "pattern": 0
-        },
-        "payload": {
-            "type": "object"
-        },
-        "open_content": {
-            "type": "object"
-        },
-        "composition": {
-            "type": "boolean"
-        },
-    },
-    "required": [
-        "id",
-        "channel",
-        "timestamp",
-        "schema",
-        "payload"
-    ]
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"type": "object",
+	"properties": {
+		"id": {
+			"type": "string",
+			"pattern": "LG[a-zA-Z0-9]{32}"
+		},
+		"channel": {
+			"type": "string",
+			"format": "string"
+		},
+		"timestamp": {
+			"type": "string",
+			"format": "date-time"
+		},
+		"schema": {
+			"type": "integer",
+			"pattern": 0
+		},
+		"payload": {
+			"type": "object"
+		},
+		"open_content": {
+			"type": "object"
+		},
+		"composition": {
+			"type": "boolean"
+		}
+	},
+	"required": [
+		"id",
+		"channel",
+		"timestamp",
+		"schema",
+		"payload"
+	]
 }

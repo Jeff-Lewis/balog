@@ -3,7 +3,8 @@ import unittest
 
 from balog.consumers import ConsumerHub
 from balog.consumers import Consumer
-from ..fixtures import my_consumers
+
+from tests.fixtures import my_consumers
 
 
 class TestConsumer(unittest.TestCase):
@@ -12,20 +13,20 @@ class TestConsumer(unittest.TestCase):
         hub = ConsumerHub()
         hub.scan(my_consumers)
 
-        self.assertEqual(len(hub.consumers), 3)
+        self.assertEqual(len(hub.consumers), 5)
         func_to_consumers = dict(
             (consumer.func, consumer)
             for consumer in hub.consumers
         )
         self.assertEqual(
             set(func_to_consumers.keys()),
-            set(
-                [
-                    my_consumers.consumer_a,
-                    my_consumers.consumer_b,
-                    my_consumers.consumer_c
-                ]
-            )
+            {
+                my_consumers.consumer_a,
+                my_consumers.consumer_b,
+                my_consumers.consumer_c,
+                my_consumers.consumer_d,
+                my_consumers.consumer_e,
+            }
         )
 
         consumer_a = func_to_consumers[my_consumers.consumer_a]
@@ -43,7 +44,7 @@ class TestConsumer(unittest.TestCase):
         eggs_event = dict(payload=dict(cls_type='eggs'))
         self.assertEqual(
             set(hub.route(eggs_event)),
-            set([consumer_a, consumer_b]),
+            {consumer_a, consumer_b}
         )
 
     def test_cls_type_predicate(self):
