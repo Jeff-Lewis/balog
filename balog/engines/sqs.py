@@ -4,7 +4,7 @@ import logging
 import boto.sqs
 from boto.sqs.message import RawMessage
 
-from balog.consumers import Engine
+from . import Engine
 
 # Notice: this logger should be configured carefully
 logger = logging.getLogger(__name__)

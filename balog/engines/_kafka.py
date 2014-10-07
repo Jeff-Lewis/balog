@@ -3,13 +3,12 @@ import logging
 
 import kafka
 
-from balog.consumers import Engine
+from . import Engine
 
 # Notice: this logger should be configured carefully
 logger = logging.getLogger(__name__)
 
 
-# TODO: define a base class?
 class KafkaEngine(Engine):
     """Event processing engine for Apache Kafka
 
@@ -37,13 +36,11 @@ class KafkaEngine(Engine):
     def client(self):
         return kafka.KafkaClient(self.kafka_server)
 
-    @property
-    def consumer(self):
-        # TODO: looks like consumers can specify many topics
-        return kafka.SimpleConsumer(self.client, self.group, self.topic)
+    def consumer(self, topic):
+        return kafka.SimpleConsumer(self.client, self.group, topic)
 
     def messages(self, topic):
-        return self.consumer
+        return self.consumer(topic)
 
     def poll_topic(self, topic, consumers):
         logger.info(
@@ -51,7 +48,7 @@ class KafkaEngine(Engine):
             topic, consumers,
         )
         while self.running:
-            for message in self.consumer:
+            for message in self.consumer(topic):
                 self.on_message(message, consumers)
                 if not self.running:
                     break

@@ -3,7 +3,7 @@ import unittest
 
 import mock
 
-from balog import consumers
+from balog import consumers, engines
 
 from tests import fixtures
 
@@ -20,7 +20,7 @@ class TestEngine(unittest.TestCase):
     def setUp(self):
         self.hub = consumers.ConsumerHub()
         self.hub.scan(fixtures.my_consumers)
-        self.engine = consumers.Engine(self.hub)
+        self.engine = engines.Engine(self.hub)
 
     def test_defaults(self):
         self.assertFalse(self.engine.running)
