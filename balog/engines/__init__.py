@@ -52,10 +52,19 @@ class Engine(object):
         if not processed and self.default_event_handler:
             self.default_event_handler(event)
 
+    def on_error(self, raw_message, error):
+        logger.error(
+            'Failed to parse "%s": %r (%s)', raw_message, error, error
+        )
+
     def on_message(self, message, consumers):
         json_data = json.loads(message)
-        event = self.schema.deserialize(json_data)
-        self.on_event(event, consumers)
+        try:
+            event = self.schema.deserialize(json_data)
+        except Exception as ex:
+            self.on_error(message, ex)
+        else:
+            self.on_event(event, consumers)
 
     def messages(self, topic):
         raise NotImplementedError()
@@ -104,7 +113,7 @@ class Engine(object):
             logger.info('Stopping %s', self.__class__.__name__)
 
         for thread in threads:
-            thread.join()
+            thread.join(timeout=10.0)
 
         logger.info('Stopped %s', self.__class__.__name__)
 

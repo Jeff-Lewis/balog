@@ -32,7 +32,9 @@ class TestKafkaEngine(unittest.TestCase):
         self.assertEqual(
             args, (kafka.KafkaClient(), self.group, self.topic)
         )
+        offset_and_message = mock.Mock()
+        kafka.SimpleConsumer.return_value = [offset_and_message]
         self.assertEqual(
-            self.engine.messages(self.topic),
-            kafka.SimpleConsumer()
+            list(self.engine.messages(self.topic)),
+            [offset_and_message.message.value]
         )

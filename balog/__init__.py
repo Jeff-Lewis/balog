@@ -7,6 +7,9 @@ from structlog.processors import format_exc_info
 from structlog.processors import JSONRenderer
 
 from .processors import LogProcessor
+import consumers
+import engines
+from .consumers import consumer_config
 
 
 def load_pkg_file(pkg_filename, filename, default):

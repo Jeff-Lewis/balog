@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 import logging
+import time
 
 import kafka
 
@@ -37,22 +38,20 @@ class KafkaEngine(Engine):
         return kafka.KafkaClient(self.kafka_server)
 
     def consumer(self, topic):
-        return kafka.SimpleConsumer(self.client, self.group, topic)
+        try:
+            return kafka.SimpleConsumer(self.client, self.group, str(topic))
+        except KeyError:
+            # topic does not exist, hack in a back off period
+            time.sleep(5)
+            return []
 
     def messages(self, topic):
-        return self.consumer(topic)
-
-    def poll_topic(self, topic, consumers):
-        logger.info(
-            'Polling %s for consumers %s',
-            topic, consumers,
-        )
-        while self.running:
-            for message in self.consumer(topic):
-                self.on_message(message, consumers)
-                if not self.running:
-                    break
+        for offset_and_message in self.consumer(topic):
+            yield offset_and_message.message.value
 
     def run(self):
         super(KafkaEngine, self).run()
-        self.client.close()
+        try:
+            self.client.close()
+        except:
+            pass
