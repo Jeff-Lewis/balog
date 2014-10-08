@@ -16,3 +16,18 @@ def consumer_b(event):
 @consumer_config(topic='5566', cls_type=('55', '66'))
 def consumer_c(event):
     pass
+
+
+# no overlap in cls type with c
+@consumer_config(topic='5566', cls_type=('77', '88'))
+def consumer_d(event):
+    pass
+
+
+# overlap in cls type with d and e
+@consumer_config(topic='5566', cls_type=('66', '88'))
+def consumer_e(event):
+    pass
+
+
+all_consumers = consumer_a, consumer_b, consumer_c, consumer_d, consumer_e

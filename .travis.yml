@@ -5,9 +5,9 @@ python:
 install: 
   - 'easy_install -U setuptools'
   - 'pip install -U pip'
-  - 'pip install -e .[tests]'
+  - 'pip install -e .[tests,kafka,sqs]'
 # command to run tests
 script: 
   - 'nosetests -sv --with-coverage'
   - 'pip install flake8 --use-mirrors'
-  - 'flake8 balog --ignore=E501,W293'
+  - 'flake8 balog --ignore=E501,W293,F401'

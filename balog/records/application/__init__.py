@@ -18,6 +18,10 @@ class ApplicationRecordSchema(AbstractSchema):
     }
 
 
+class Null(ApplicationRecordSchema):
+    cls_type = 'null'
+
+
 class Log(ApplicationRecordSchema):
     cls_type = 'log'
     message = colander.SchemaNode(colander.String())

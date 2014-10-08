@@ -12,8 +12,12 @@ tests_require = [
     'jsonschema',
 ]
 
-sqs_require = [
+sqs_requires = [
     'boto',
+]
+
+kafka_requires = [
+    'kafka-python>=0.9,<1.0.0'
 ]
 
 version = open(os.path.join('balog', 'version.txt'), 'rt').read()
@@ -43,7 +47,8 @@ setup(
     ],
     extras_require=dict(
         tests=tests_require,
-        sqs=sqs_require,
+        sqs=sqs_requires,
+        kafka=kafka_requires,
     ),
     tests_require=tests_require,
     test_suite='nose.collector',

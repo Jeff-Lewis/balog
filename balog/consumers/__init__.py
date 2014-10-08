@@ -1,7 +1,11 @@
 from __future__ import unicode_literals
 from distutils.version import StrictVersion
+import logging
 
 import venusian
+
+
+logger = logging.getLogger(__name__)
 
 
 def consumer_config(*args, **kwargs):
@@ -103,11 +107,10 @@ class Consumer(object):
 
         """
         if (
-            self.cls_type is not None and
-            event['payload']['cls_type'] not in self.cls_type
+            self.cls_type and event['payload']['cls_type'] not in self.cls_type
         ):
             return False
-        if (self.version is not None):
+        if self.version:
             schema_version = event['schema']
             for version_condition in self.version:
                 op_func = self._parse_version_condition(version_condition)
@@ -150,3 +153,24 @@ class ConsumerHub(object):
             if not consumer.match_event(event):
                 continue
             yield consumer
+
+    def __iter__(self):
+        for consumer in self.consumers:
+            yield consumer
+
+
+class DefaultConsumerOperator(object):
+
+    @classmethod
+    def get_topic(cls, consumer):
+        """Get the topic of consumer
+
+        """
+        return consumer.topic
+
+    @classmethod
+    def process_event(cls, consumer, event):
+        """Call consumer's function
+
+        """
+        return consumer.func(event)
