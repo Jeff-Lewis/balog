@@ -20,7 +20,7 @@ kafka_requires = [
     'kafka-python>=0.9,<1.0.0'
 ]
 
-version = open(os.path.join('balog', 'version.txt'), 'rt').read()
+version = open(os.path.join('balog', 'version.txt'), 'rt').read().strip()
 
 
 setup(
@@ -28,6 +28,8 @@ setup(
     version=version,
     description='Balanced event logging schema and library',
     url='https://github.com/balanced/balog/',
+    author='Balanced',
+    author_email='dev@balancedpayments.com',
     packages=find_packages(),
     install_requires=[
         'jsonschema',
