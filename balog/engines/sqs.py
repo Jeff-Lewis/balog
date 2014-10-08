@@ -10,7 +10,6 @@ from . import Engine
 logger = logging.getLogger(__name__)
 
 
-# TODO: define a base class?
 class SQSEngine(Engine):
     """Event processing engine for polling Amazon SQS queues
 
