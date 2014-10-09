@@ -52,9 +52,14 @@ class Engine(object):
         if not processed and self.default_event_handler:
             self.default_event_handler(event)
 
-    def on_error(self, raw_message, error):
+    def on_deserialization_error(self, raw_message, error):
         logger.error(
             'Failed to parse "%s": %r (%s)', raw_message, error, error
+        )
+
+    def on_error(self, event, error):
+        logger.error(
+            'Error handling "%s": %r (%s)', event, error, error
         )
 
     def on_message(self, message, consumers):
@@ -62,9 +67,12 @@ class Engine(object):
         try:
             event = self.schema.deserialize(json_data)
         except Exception as ex:
-            self.on_error(message, ex)
+            self.on_deserialization_error(message, ex)
         else:
-            self.on_event(event, consumers)
+            try:
+                self.on_event(event, consumers)
+            except Exception as ex:
+                self.on_error(event, ex)
 
     def messages(self, topic):
         raise NotImplementedError()
