@@ -1,0 +1,135 @@
+#!/usr/bin/env python
+"""
+This script is used to reingest files from S3 (uploaded via fluentd) into Kafka.
+
+It assumes that you're using the default file format (TSV). Not sure how it
+handles entries with tabs in them, we definitely should test that.
+"""
+from __future__ import unicode_literals
+import argparse
+from datetime import datetime
+import fnmatch
+import functools
+import logging
+import multiprocessing
+import multiprocessing.pool
+import os
+import zlib
+
+import boto
+import kafka
+
+
+downloader_pool = multiprocessing.pool.ThreadPool(1)
+emitter_pool = multiprocessing.pool.ThreadPool(1)
+
+
+def reingest(args):
+    conn = boto.connect_s3()
+    bucket = conn.get_bucket(args.bucket)
+    keys = bucket.list(args.path)
+    downloader = functools.partial(download_keys, args.bucket, args)
+    filter = functools.partial(filter_keys, args)
+    downloader_pool.map(downloader, filter(keys))
+
+
+def download_keys(bucket, ctx, path):
+    conn = boto.connect_s3()
+    bucket = conn.get_bucket(bucket)
+    key = bucket.get_key(path)
+    emitter = functools.partial(emit, args.server, args.dry)
+    extractor = functools.partial(extract_payload, ctx)
+    emitter_pool.map(emitter, extractor(key))
+
+
+def extract_payload(ctx, key):
+    for bytes in stream_decompress(key):
+        for line in bytes.split('\n'):
+            try:
+                time_stamp, channel, payload = line.split('\t')
+            except ValueError:
+                pass
+            else:
+                if not filter_entry(time_stamp, channel, payload, ctx):
+                    yield time_stamp, channel, payload
+
+
+def filter_keys(ctx, keys):
+    dt_format = '%Y%m%d%H'
+    before = datetime.strptime(args.before, dt_format) if ctx.before else None
+    after = datetime.strptime(args.after, dt_format) if ctx.after else None
+
+    for key in keys:
+        name, _ = os.path.splitext(os.path.basename(key.name))
+        date_component = datetime.strptime(name.split('_')[0], dt_format)
+        if before and date_component > before:
+            continue
+        if after and date_component < after:
+            continue
+        if args.glob and not fnmatch.fnmatch(key.name, args.glob):
+            continue
+        yield key
+
+
+def filter_entry(time_stamp, channel, payload, ctx):
+    if ctx.channel and ctx.channel != channel:
+        return True
+    return False
+
+
+def emit(server, dry, raw_payload):
+    time_stamp, channel, payload = raw_payload
+    if not dry:
+        client = kafka.KafkaClient(server)
+        producer = kafka.SimpleProducer(client)
+        producer.send_messages(channel, payload)
+    print time_stamp, channel, payload
+
+
+def stream_decompress(stream):
+    # http://stackoverflow.com/a/12572031/6084
+    dec = zlib.decompressobj(16 + zlib.MAX_WBITS)
+    for chunk in stream:
+        rv = dec.decompress(chunk)
+        if rv:
+            yield rv
+
+
+if __name__ == '__main__':
+    common = argparse.ArgumentParser(add_help=False)
+    parents = [common]
+    parser = argparse.ArgumentParser(
+        parents=parents,
+        description='',
+    )
+    cmds = parser.add_subparsers(title='commands')
+    cmd = cmds.add_parser(
+        'kafka',
+        parents=parents,
+        description='kafka commands',
+    )
+    cmd.add_argument('server')
+    kafka_cmds = cmd.add_subparsers(title='commands')
+
+    kafka_parser = kafka_cmds.add_parser(
+        'reingest',
+        description='Reingest from S3',
+        parents=parents,
+    )
+    kafka_parser.add_argument('bucket', help='e.g. balanced-logs-us-east-1')
+    kafka_parser.add_argument('path', help='e.g. test/balog')
+    kafka_parser.add_argument('--before', help='YYYYMMDDHH')
+    kafka_parser.add_argument('--after', help='YYYYMMDDHH')
+    kafka_parser.add_argument(
+        '--glob', help='Standard unix glob to match the path for the file')
+    kafka_parser.add_argument('--channel', help='Channel to filter events for')
+    kafka_parser.add_argument(
+        '--target-topic',
+        help='If provided, will send all matching events to this topic')
+    kafka_parser.add_argument('--dry', action='store_true', default=False)
+
+    kafka_parser.set_defaults(cmd=reingest)
+
+    args = parser.parse_args()
+    logging.basicConfig(level=logging.INFO)
+    args.cmd(args)
