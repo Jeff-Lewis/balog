@@ -1,0 +1,291 @@
+#!/usr/bin/env python
+"""
+Misc kafka tooling.
+
+`kafka list` - lists all topics and their consumers
+`kafka offset group topic position` - sets the position for a topic/group
+`kafka ingest bucket path/to/files` - ingest topics from s3
+"""
+from __future__ import unicode_literals
+import argparse
+from datetime import datetime
+from fnmatch import fnmatch
+import functools
+import json
+import logging
+import multiprocessing
+import multiprocessing.pool
+import os
+import zlib
+
+import boto
+import kafka
+import kazoo
+import kazoo.client
+import kazoo.exceptions
+from tabulate import tabulate
+
+
+downloader_pool = multiprocessing.pool.ThreadPool(1)
+emitter_pool = multiprocessing.pool.ThreadPool(1)
+
+
+def ingest(args):
+    zk = kazoo.client.KazooClient(hosts='{}:{}'.format(args.host, args.port))
+    zk.start()
+    servers = [
+        '{host}:{port}'.format(**node)
+        for node in get_node_info(zk).itervalues()
+    ]
+    conn = boto.connect_s3()
+    bucket = conn.get_bucket(args.bucket)
+    keys = bucket.list(args.path)
+    downloader = functools.partial(download_keys, args.bucket, servers, args)
+    filter = functools.partial(filter_keys, args)
+    downloader_pool.map(downloader, filter(keys))
+
+
+def download_keys(bucket, servers, ctx, path):
+    conn = boto.connect_s3()
+    bucket = conn.get_bucket(bucket)
+    key = bucket.get_key(path)
+    emitter = functools.partial(emit, servers, args.dry)
+    extractor = functools.partial(extract_payload, ctx)
+    emitter_pool.map(emitter, extractor(key))
+
+
+def extract_payload(ctx, key):
+    for bytes in stream_decompress(key):
+        for line in bytes.split('\n'):
+            try:
+                time_stamp, channel, payload = line.split('\t')
+            except ValueError:
+                pass
+            else:
+                if not filter_entry(time_stamp, channel, payload, ctx):
+                    yield time_stamp, channel, payload
+
+
+def filter_keys(ctx, keys):
+    dt_format = '%Y%m%d%H'
+    before = datetime.strptime(args.before, dt_format) if ctx.before else None
+    after = datetime.strptime(args.after, dt_format) if ctx.after else None
+
+    for key in keys:
+        name, _ = os.path.splitext(os.path.basename(key.name))
+        date_component = datetime.strptime(name.split('_')[0], dt_format)
+        if before and date_component > before:
+            continue
+        if after and date_component < after:
+            continue
+        if args.glob and not fnmatch(key.name, args.glob):
+            continue
+        yield key
+
+
+def filter_entry(time_stamp, channel, payload, ctx):
+    if ctx.channel and ctx.channel != channel:
+        return True
+    return False
+
+
+def emit(servers, dry, raw_payload):
+    time_stamp, channel, payload = raw_payload
+    if not dry:
+        client = kafka.KafkaClient(servers)
+        producer = kafka.SimpleProducer(client)
+        producer.send_messages(channel, payload)
+    print time_stamp, channel, payload
+
+
+def stream_decompress(stream):
+    # http://stackoverflow.com/a/12572031/6084
+    dec = zlib.decompressobj(16 + zlib.MAX_WBITS)
+    for chunk in stream:
+        rv = dec.decompress(chunk)
+        if rv:
+            yield rv
+
+
+def get_group_offsets(group, topic, zk):
+    data = {}
+    path = '/consumers/{group}/offsets/{topic}'.format(topic=topic, group=group)
+    partition_offsets = zk.get_children(path)
+    for partition in partition_offsets:
+        path = '/consumers/{group}/offsets/{topic}/{partition}'.format(
+            topic=topic, group=group, partition=partition)
+        value, _ = zk.get(path)
+        data[partition] = json.loads(value)
+    return data
+
+
+def get_consumer_info(zk):
+    consumers = zk.get_children('/consumers')
+    data = {}
+    for group in consumers:
+        data.setdefault(group, {'topics': {}})
+        path = '/consumers/{group}/offsets'.format(group=group)
+        try:
+            topics = zk.get_children(path)
+        except kazoo.exceptions.NoNodeError:
+            pass
+        else:
+            for topic in topics:
+                data[group]['topics'].setdefault(topic, {})
+                data[group]['topics'][topic]['offsets'] = get_group_offsets(
+                    group, topic, zk
+                )
+    return data
+
+
+def get_topic_info(zk):
+    topics = zk.get_children('/config/topics')
+    data = {}
+    for topic in topics:
+        data.setdefault(topic, {'partitions': {}})
+        partitions = zk.get_children(
+            '/brokers/topics/{topic}/partitions'.format(topic=topic)
+        )
+        for partition in partitions:
+            state, _ = zk.get(
+                '/brokers/topics/{topic}/partitions/{partition}/state'.format(
+                    topic=topic, partition=partition)
+            )
+            data[topic]['partitions'][partition] = json.loads(state)
+    return data
+
+
+def get_node_info(zk):
+    data = {}
+    for broker in zk.get_children('/brokers/ids'):
+        value, _ = zk.get('/brokers/ids/{broker}'.format(broker=broker))
+        data[broker] = json.loads(value)
+    return data
+
+
+def display(args):
+    zk = kazoo.client.KazooClient(hosts='{}:{}'.format(args.host, args.port))
+    zk.start()
+    data = {
+        'topics': get_topic_info(zk),
+        'consumers': get_consumer_info(zk),
+        'nodes': get_node_info(zk),
+    }
+    consumers_by_topic = [
+        (data['consumers'][consumer]['topics'].keys(), consumer)
+        for consumer in data['consumers']
+    ]
+    topic_glob = getattr(args, 'topic-glob')
+    for topic, meta in data['topics'].iteritems():
+        if topic_glob and not fnmatch(topic, topic_glob):
+            continue
+        topic_info = (
+            (
+                partition,
+                [data['nodes'][str(node)]['host'] for node in meta['isr']],
+                data['nodes'][str(meta['leader'])]['host']
+            )
+            for partition, meta in data['topics'][topic]['partitions'].iteritems()
+        )
+        print '\n'
+        print topic
+        print tabulate(topic_info, headers=['partition', 'nodes', 'leader'])
+        consumer_info = [
+            (consumer, data['consumers'][consumer]['topics'][topic]['offsets'])
+            for consumer_topic, consumer in consumers_by_topic
+            if topic in consumer_topic
+        ]
+        consumers_by_partition = [
+            (partition, consumer, consumer_meta[str(partition)])
+            for consumer, consumer_meta in consumer_info
+            for partition, value in consumer_meta.iteritems()
+        ]
+        if consumers_by_partition:
+            print '\n', tabulate(
+                consumers_by_partition,
+                headers=['partition', 'consumer', 'offset']
+            )
+
+
+def debug(args):
+    zk = kazoo.client.KazooClient(hosts='{}:{}'.format(args.host, args.port))
+    zk.start()
+    data = {
+        'topics': get_topic_info(zk),
+        'consumers': get_consumer_info(zk),
+        'nodes': get_node_info(zk),
+    }
+    print json.dumps(data, indent=4, sort_keys=True)
+
+
+
+def update_offset(args):
+    zk = kazoo.client.KazooClient(hosts='{}:{}'.format(args.host, args.port))
+    zk.start()
+
+    offsets = get_group_offsets(args.group, args.topic, zk)
+    for partition, offset in offsets.iteritems():
+        path = '/consumers/{group}/offsets/{topic}/{partition}'.format(
+            topic=args.topic, group=args.group, partition=partition)
+        zk.set(path, str(args.offset))
+
+    import ipdb; ipdb.set_trace()
+
+
+if __name__ == '__main__':
+    common = argparse.ArgumentParser(add_help=False)
+    parents = [common]
+    parser = argparse.ArgumentParser(
+        parents=parents,
+        description='',
+    )
+    parser.add_argument('--host', default='localhost')
+    parser.add_argument('--port', default=2181, type=int)
+
+    cmds = parser.add_subparsers(title='commands')
+
+    display_cmd = cmds.add_parser(
+        'list',
+        parents=parents,
+    )
+    display_cmd.add_argument('topic-glob', nargs='?')
+    display_cmd.set_defaults(cmd=display)
+
+    update_cmd = cmds.add_parser(
+        'offset',
+        help='Make sure consumers are *stopped* before running this command.',
+        parents=parents
+    )
+    update_cmd.add_argument('group')
+    update_cmd.add_argument('topic')
+    update_cmd.add_argument('offset', type=int)
+    update_cmd.set_defaults(cmd=update_offset)
+
+    ingest_cmd = cmds.add_parser(
+        'ingest',
+        description='Reingest from S3',
+        parents=parents,
+    )
+    ingest_cmd.add_argument('bucket', help='e.g. balanced-logs-us-east-1')
+    ingest_cmd.add_argument('path', help='e.g. test/balog')
+    ingest_cmd.add_argument('--before', help='YYYYMMDDHH')
+    ingest_cmd.add_argument('--after', help='YYYYMMDDHH')
+    ingest_cmd.add_argument(
+        '--glob', help='Standard unix glob to match the path for the file')
+    ingest_cmd.add_argument('--channel', help='Channel to filter events for')
+    ingest_cmd.add_argument(
+        '--target-topic',
+        help='If provided, will send all matching events to this topic')
+    ingest_cmd.add_argument('--dry', action='store_true', default=False)
+
+    ingest_cmd.set_defaults(cmd=ingest)
+
+    debug_cmd = cmds.add_parser(
+        'debug',
+        parents=parents,
+    )
+    debug_cmd.set_defaults(cmd=debug)
+
+    args = parser.parse_args()
+    logging.basicConfig(level=logging.INFO)
+    args.cmd(args)

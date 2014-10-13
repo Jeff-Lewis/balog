@@ -17,7 +17,9 @@ sqs_requires = [
 ]
 
 kafka_requires = [
-    'kafka-python>=0.9,<1.0.0'
+    'kafka-python>=0.9,<1.0.0',
+    'kazoo>=2.0,<2.1',
+    'tabulate==0.7.3'
 ]
 
 version = open(os.path.join('balog', 'version.txt'), 'rt').read().strip()
