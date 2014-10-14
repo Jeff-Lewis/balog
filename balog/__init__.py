@@ -9,6 +9,7 @@ from structlog.processors import JSONRenderer
 from .processors import LogProcessor
 import consumers
 import engines
+import formatters
 from .consumers import consumer_config
 
 
