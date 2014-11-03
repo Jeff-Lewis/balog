@@ -2,27 +2,17 @@ from __future__ import unicode_literals
 import logging
 
 import colander
-from colander.polymorphism import AbstractSchema
 
+from .. import base
 
 logger = logging.getLogger(__name__)
 
 
-class ApplicationRecordSchema(AbstractSchema):
-    cls_type = colander.SchemaNode(colander.String())
-
-    # TODO: this is what I think how it should work
-    # need to implement a MappingSchema so that it can work like this
-    __mapper_args__ = {
-        'polymorphic_on': 'cls_type',
-    }
-
-
-class Null(ApplicationRecordSchema):
+class Null(base.PayloadSchema):
     cls_type = 'null'
 
 
-class Log(ApplicationRecordSchema):
+class Log(base.PayloadSchema):
     cls_type = 'log'
     message = colander.SchemaNode(colander.String())
     severity = colander.SchemaNode(colander.String(), validators=[
@@ -46,6 +36,6 @@ class MetricsValues(colander.SequenceSchema):
     value = MetricsValue()
 
 
-class Metrics(ApplicationRecordSchema):
+class Metrics(base.PayloadSchema):
     cls_type = 'metrics'
     values = MetricsValues()

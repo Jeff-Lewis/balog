@@ -40,7 +40,7 @@ class TestLog(unittest.TestCase):
         self.assertEqual(len(handler.records), 1)
         msg = handler.records[0].getMessage()
         log_dict = json.loads(msg)
-        self.assertEqual(log_dict['schema'], '0.0.1')
+        self.assertEqual(log_dict['version'], '0.0.1')
         self.assertTrue(log_dict['header']['id'].startswith('LG'))
         self.assertEqual(log_dict['header']['channel'],
                          'tests.unit.test_log.foobar')
@@ -64,7 +64,7 @@ class TestLog(unittest.TestCase):
         self.assertEqual(len(handler.msgs), 1)
         msg = handler.msgs[0]
         log_dict = json.loads(msg)
-        self.assertEqual(log_dict['schema'], '0.0.1')
+        self.assertEqual(log_dict['version'], '0.0.1')
         self.assertTrue(log_dict['header']['id'].startswith('LG'))
         self.assertEqual(log_dict['header']['channel'], 'root')
         self.assertEqual(log_dict['payload'], {
