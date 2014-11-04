@@ -1,0 +1,17 @@
+{
+	"header": {
+		"timestamp": "2014-10-07T15:06:51.641083+00:00",
+		"id": "LGk37Fo3xLLVx9GrfnyTuvBd",
+		"context": {
+			"fqdn": "node1.vandelay.io",
+			"application": "sentry",
+			"application_version": "1.0.0"
+		},
+		"channel": "tests.unit.test_log.foobar"
+	},
+	"payload": {
+		"cls_type": "three",
+		"message": "bar"
+	},
+	"version": "0.0.1"
+}

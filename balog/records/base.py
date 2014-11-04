@@ -77,7 +77,7 @@ class RecordSchema(colander.MappingSchema):
 
     VERSION = '0.0.1'
 
-    # version of the schema
+    # version of the record schema
     version = colander.SchemaNode(colander.String(), default=VERSION)
 
     header = EventHeader()
